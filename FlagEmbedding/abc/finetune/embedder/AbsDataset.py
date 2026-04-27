@@ -403,15 +403,15 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
         if train_group_size == 4:
             # 80GB
             if 'len-0-500.jsonl' in file:
-                return 48
+                return 24
             elif 'len-500-1000.jsonl' in file:
-                return 32
+                return 16
             elif 'len-1000-2000.jsonl' in file:
-                return 20
+                return 10
             elif 'len-2000-3000.jsonl' in file:
-                return 18
+                return 9
             elif 'len-3000-4000.jsonl' in file:
-                return 14
+                return 7
             elif 'len-4000-5000.jsonl' in file:
                 return 7
             elif 'len-5000-6000.jsonl' in file:
