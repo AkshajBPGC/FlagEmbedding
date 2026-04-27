@@ -298,6 +298,7 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
                     train_datasets.append(temp_dataset)
                     each_data_idxs.append(np.arange(len(temp_dataset)) + cur_all_num)
                     cur_all_num += len(temp_dataset)
+                    print("========= RUNNING NON AUTO BATCHED VERSION ==========") 
                     batch_size_idxs.append(self._get_file_batch_size(temp_dataset, default_batch_size))
                     no_in_batch_neg_flags.append(no_in_batch_neg_flag)
 
@@ -364,24 +365,24 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
                 temp_dataset = temp_dataset.remove_columns(['neg_scores'])
         return temp_dataset
 
-    # @staticmethod
-    # def _get_file_batch_size(temp_dataset: datasets.Dataset, default_batch_size: int):
-    #     """Get the appropriate batch size for the dataset.
+    @staticmethod
+    def _get_file_batch_size(temp_dataset: datasets.Dataset, default_batch_size: int):
+        """Get the appropriate batch size for the dataset.
 
-    #     Args:
-    #         temp_dataset (datasets.Dataset): Loaded :data:`datasets.Dataset` object.
-    #         default_batch_size (int): The default batch size to use if not specified in the dataset.
+        Args:
+            temp_dataset (datasets.Dataset): Loaded :data:`datasets.Dataset` object.
+            default_batch_size (int): The default batch size to use if not specified in the dataset.
 
-    #     Returns:
-    #         int: The final batch size to use.
-    #     """
-    #     if 'batch_size' in temp_dataset.column_names:
-    #         return temp_dataset['batch_size'][0]
-    #     if 'type' in temp_dataset.column_names:
-    #         data_type = temp_dataset['type'][0]
-    #         if 'symmetric' in data_type:
-    #             return default_batch_size // 2  # make the symmetric data have smaller batch size
-    #     return default_batch_size
+        Returns:
+            int: The final batch size to use.
+        """
+        if 'batch_size' in temp_dataset.column_names:
+            return temp_dataset['batch_size'][0]
+        if 'type' in temp_dataset.column_names:
+            data_type = temp_dataset['type'][0]
+            if 'symmetric' in data_type:
+                return default_batch_size // 2  # make the symmetric data have smaller batch size
+        return default_batch_size
 
     def print_batch_size(self, batch_size: int, train_group_size: int):
         length_list = ['0-500', '500-1000', '1000-2000', '2000-3000', '3000-4000', '4000-5000', '5000-6000', '6000-7000', '7000-inf']
