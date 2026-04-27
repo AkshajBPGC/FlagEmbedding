@@ -398,7 +398,7 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
     
     @staticmethod
     def get_file_batch_size(file: str, batch_size: int, train_group_size: int):
-        if train_group_size == 8:
+        if train_group_size == 4:
             # 80GB
             if 'len-0-500.jsonl' in file:
                 return 24
