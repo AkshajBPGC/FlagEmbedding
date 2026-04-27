@@ -281,6 +281,8 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
         small_threshold = args.small_threshold
         drop_threshold = args.drop_threshold
 
+        self.print_batch_size(batch_size=default_batch_size, train_group_size=args.train_group_size)
+
         for data_dir in args.train_data:
             if not os.path.isdir(data_dir):
                 # Add `no_in_batch_neg` **suffix** to `data_dir` to indicate that this dataset does not use in-batch negatives
@@ -309,12 +311,14 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
                     if len(temp_dataset) == 0: continue
                     elif len(temp_dataset) < small_threshold:
                         small_datasets.append(temp_dataset)
-                        small_batch_size = min(small_batch_size, self._get_file_batch_size(temp_dataset, default_batch_size))
+                        # small_batch_size = min(small_batch_size, self._get_file_batch_size(temp_dataset, default_batch_size))
+                        small_batch_size = min(small_batch_size, self.get_file_batch_size(file, default_batch_size, train_group_size=args.train_group_size))
                     else:
                         train_datasets.append(temp_dataset)
                         each_data_idxs.append(np.arange(len(temp_dataset)) + cur_all_num)
                         cur_all_num += len(temp_dataset)
-                        batch_size_idxs.append(self._get_file_batch_size(temp_dataset, default_batch_size))
+                        # batch_size_idxs.append(self._get_file_batch_size(temp_dataset, default_batch_size))
+                        batch_size_idxs.append(self.get_file_batch_size(file, default_batch_size, train_group_size=args.train_group_size))
                         no_in_batch_neg_flags.append(no_in_batch_neg_flag)
 
                 if len(small_datasets) > 0:
@@ -357,24 +361,86 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
                 temp_dataset = temp_dataset.remove_columns(['neg_scores'])
         return temp_dataset
 
+    # @staticmethod
+    # def _get_file_batch_size(temp_dataset: datasets.Dataset, default_batch_size: int):
+    #     """Get the appropriate batch size for the dataset.
+
+    #     Args:
+    #         temp_dataset (datasets.Dataset): Loaded :data:`datasets.Dataset` object.
+    #         default_batch_size (int): The default batch size to use if not specified in the dataset.
+
+    #     Returns:
+    #         int: The final batch size to use.
+    #     """
+    #     if 'batch_size' in temp_dataset.column_names:
+    #         return temp_dataset['batch_size'][0]
+    #     if 'type' in temp_dataset.column_names:
+    #         data_type = temp_dataset['type'][0]
+    #         if 'symmetric' in data_type:
+    #             return default_batch_size // 2  # make the symmetric data have smaller batch size
+    #     return default_batch_size
+
+    def print_batch_size(self, batch_size: int, train_group_size: int):
+        length_list = ['0-500', '500-1000', '1000-2000', '2000-3000', '3000-4000', '4000-5000', '5000-6000', '6000-7000', '7000-inf']
+        batch_size_dict = {
+            k: self.get_file_batch_size(f"len-{k}.jsonl", batch_size, train_group_size) for k in length_list
+        }
+        batch_size_list = [
+            f'{length}: {batch_size_dict[length]}' for length in length_list
+        ]
+        print("=========================")
+        print("Batch Size Dict:")
+        pprint(batch_size_list)
+        print("=========================")
+    
     @staticmethod
-    def _get_file_batch_size(temp_dataset: datasets.Dataset, default_batch_size: int):
-        """Get the appropriate batch size for the dataset.
-
-        Args:
-            temp_dataset (datasets.Dataset): Loaded :data:`datasets.Dataset` object.
-            default_batch_size (int): The default batch size to use if not specified in the dataset.
-
-        Returns:
-            int: The final batch size to use.
-        """
-        if 'batch_size' in temp_dataset.column_names:
-            return temp_dataset['batch_size'][0]
-        if 'type' in temp_dataset.column_names:
-            data_type = temp_dataset['type'][0]
-            if 'symmetric' in data_type:
-                return default_batch_size // 2  # make the symmetric data have smaller batch size
-        return default_batch_size
+    def get_file_batch_size(file: str, batch_size: int, train_group_size: int):
+        if train_group_size == 8:
+            # 80GB
+            if 'len-0-500.jsonl' in file:
+                return 48
+            elif 'len-500-1000.jsonl' in file:
+                return 32
+            elif 'len-1000-2000.jsonl' in file:
+                return 20
+            elif 'len-2000-3000.jsonl' in file:
+                return 18
+            elif 'len-3000-4000.jsonl' in file:
+                return 14
+            elif 'len-4000-5000.jsonl' in file:
+                return 14
+            elif 'len-5000-6000.jsonl' in file:
+                return 12
+            elif 'len-6000-7000.jsonl' in file:
+                return 10
+            elif 'len-7000-inf.jsonl' in file:
+                return 8
+            else:
+                return batch_size
+        elif train_group_size == 1:
+            # 80GB
+            if 'len-0-500.jsonl' in file:
+                return 700
+            elif 'len-500-1000.jsonl' in file:
+                return 570
+            elif 'len-1000-2000.jsonl' in file:
+                return 388
+            elif 'len-2000-3000.jsonl' in file:
+                return 288
+            elif 'len-3000-4000.jsonl' in file:
+                return 224
+            elif 'len-4000-5000.jsonl' in file:
+                return 180
+            elif 'len-5000-6000.jsonl' in file:
+                return 157
+            elif 'len-6000-7000.jsonl' in file:
+                return 128
+            elif 'len-7000-inf.jsonl' in file:
+                return 104
+            else:
+                return batch_size
+        else:
+            return batch_size
 
     def refresh_epoch(self):
         """
