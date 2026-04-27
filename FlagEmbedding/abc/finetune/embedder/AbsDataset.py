@@ -286,6 +286,7 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
         self.print_batch_size(batch_size=default_batch_size, train_group_size=args.train_group_size)
 
         for data_dir in args.train_data:
+            print(">>>>>>>> Data Dir:", data_dir)
             if not os.path.isdir(data_dir):
                 # Add `no_in_batch_neg` **suffix** to `data_dir` to indicate that this dataset does not use in-batch negatives
                 no_in_batch_neg_flag = data_dir.split('.')[-2].endswith('no_in_batch_neg')
