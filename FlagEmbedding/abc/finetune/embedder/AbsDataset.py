@@ -281,6 +281,7 @@ class AbsEmbedderSameDatasetTrainDataset(AbsEmbedderTrainDataset):
         small_threshold = args.small_threshold
         drop_threshold = args.drop_threshold
 
+        print(">>>>>>>> DEFAULT BATCH SIZE:", default_batch_size)
         self.print_batch_size(batch_size=default_batch_size, train_group_size=args.train_group_size)
 
         for data_dir in args.train_data:
